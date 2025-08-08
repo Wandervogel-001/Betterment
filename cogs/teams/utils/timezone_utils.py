@@ -3,7 +3,6 @@ from typing import Optional
 
 class TimezoneProcessor:
     """Handles parsing and compatibility scoring for timezones."""
-    # This map is now the single source of truth for timezones.
     TIMEZONE_MAP = {
         "EST": -5, "EDT": -4, "CST": -6, "CDT": -5, "MST": -7, "MDT": -6,
         "PST": -8, "PDT": -7, "AKST": -9, "AKDT": -8, "HST": -10, "GMT": 0,
@@ -35,3 +34,4 @@ class TimezoneProcessor:
         hour_diff = abs(tz_offset1 - tz_offset2)
         # Score is 1.0 for 0 diff, decaying to 0.0 for >= 9 hours diff.
         return max(0.0, 1.0 - (hour_diff / 9.0))
+
