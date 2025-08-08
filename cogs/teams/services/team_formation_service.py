@@ -23,8 +23,6 @@ class TeamFormationService:
         self.team_manager = team_manager_instance
         self.config = TeamConfig()
 
-    # Replace the form_teams_hierarchical method in team_formation.py
-
     async def form_teams_hierarchical(self, unassigned_leaders: List[Dict], unassigned_members: List[Dict]) -> List[Team]:
         """Forms new teams using a multi-phase hierarchical clustering algorithm."""
         logger.info("="*50 + "\n🚀 STARTING HIERARCHICAL TEAM FORMATION\n" + "="*50)
@@ -35,8 +33,6 @@ class TeamFormationService:
             if 'user_id' in profile_dict:
                 user_id = profile_dict['user_id']
             else:
-                # If user_id is not in the dict, we need to pass it separately
-                # This suggests the data structure might need to be adjusted
                 logger.error(f"Missing user_id in profile data: {profile_dict}")
                 continue
 
@@ -282,3 +278,4 @@ class TeamFormationService:
                 failed_teams.append(f"Proposed Team {i}")
 
         return {"created": created_count, "failed": failed_teams}
+
