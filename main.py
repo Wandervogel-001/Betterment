@@ -55,7 +55,7 @@ async def load_cogs(bot, logger):
                 cog_name = f"cogs.{item}.cog"
                 try:
                     await bot.load_extension(cog_name)
-                    logger.info(f"Loaded cog: {cog_name}")
+                    logger.info(f"Loaded cog: {item}")
                     loaded_count += 1
                 except Exception as e:
                     logger.error(f"Failed to load cog {cog_name}: {e}", exc_info=True)
@@ -86,11 +86,6 @@ async def on_ready():
 
         synced_global = await bot.tree.sync()
         logger.info(f"Synced {len(synced_global)} global commands")
-
-        # Restore team panels
-        for cog in bot.cogs.values():
-            if hasattr(cog, 'restore_team_panels'):
-                await cog.restore_team_panels()
 
         await bot.change_presence(
             activity=discord.Activity(

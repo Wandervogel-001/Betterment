@@ -29,7 +29,6 @@ class MainPanelView(View):
         self.add_item(FetchDataButton(team_manager, panel_manager))
         self.add_item(RefreshButton(panel_manager))
 
-
 # ========== Team Selection & Management Views ==========
 
 class TeamDropdown(Select):

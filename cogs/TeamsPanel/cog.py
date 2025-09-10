@@ -35,25 +35,10 @@ class TeamsCog(commands.Cog):
         self.profile_parser = ProfileParser(self.team_manager)
         self.panel_manager = PanelManager(self.bot, self.team_manager, self.marathon_service)
 
-        # Add persistent view
+        # Restore and Add persistent view
         bot.add_view(MainPanelView(self.team_manager, self.marathon_service, self.panel_manager))
 
     # ========== EVENT LISTENERS ==========
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        """Initializes the cog and restores persistent views."""
-        for guild in self.bot.guilds:
-            try:
-                # Refresh panel on startup to ensure views are active
-                panel_data = await self.db.get_team_panel(guild.id)
-                if panel_data:
-                    self.bot.add_view(
-                        MainPanelView(self.team_manager, self.marathon_service, self.panel_manager, self.db),
-                        message_id=panel_data["message_id"]
-                    )
-            except Exception as e:
-                logger.error(f"Error restoring panel view for guild {guild.id}: {e}")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
@@ -77,7 +62,7 @@ class TeamsCog(commands.Cog):
             message = await channel.fetch_message(payload.message_id)
             if message.author.bot:
                 return
-            #await self.profile_parser.handle_profile_parsing(message, payload.guild_id)
+            await self.profile_parser.handle_profile_parsing(message, payload.guild_id)
         except discord.NotFound:
             pass
 
@@ -104,7 +89,7 @@ class TeamsCog(commands.Cog):
 
         # Create new panel
         embed = await self.panel_manager.build_teams_embed(interaction.guild_id)
-        view = MainPanelView(self.team_manager, self.marathon_service, self.panel_manager, self.team_service)
+        view = MainPanelView(self.team_manager, self.marathon_service, self.panel_manager)
         msg = await interaction.channel.send(embed=embed, view=view)
         await self.team_service.save_team_panel(interaction.guild_id, interaction.channel_id, msg.id)
         await interaction.followup.send("✅ Team management panel created!",ephemeral=True)

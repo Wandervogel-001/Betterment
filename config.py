@@ -8,6 +8,12 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = os.getenv("DB_NAME", "Betterment")
 
+# --- Database Collection Names ---
+SETTINGS_COLLECTION=os.getenv("SETTINGS_COLLECTION", "settings")
+TEAMS_COLLECTION =os.getenv("TEAMS_COLLECTION ", "teams")
+UNREGISTERED_MEMBERS_COLLECTION=os.getenv("UNREGISTERED_MEMBERS_COLLECTION", "unregistered_members")
+EMBEDS_COLLECTION=os.getenv("EMBED_MANAGER_COLLECTION", "embeds")
+
 # --- AI Model Configuration ---
 
 # Credentials
@@ -16,6 +22,27 @@ POE_API_KEY = os.getenv("POE_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+DEFAULT_AI_MODEL = os.getenv("DEFAULT_AI_MODEL", "gemini-2.5-flash")
+
+AI_TIMEOUT = int(os.getenv("AI_TIMEOUT", 30))
+
+# --- Team & Server Configuration ---
+REACTION_EMOJI=os.getenv("REACTION_EMOJI", "✅")
+MODERATOR_ROLES = [role.strip() for role in os.getenv("MODERATOR_ROLES", "").split(",")]
+EXCLUDED_TEAM_ROLES = [role.strip() for role in os.getenv("EXCLUDED_TEAM_ROLES", "").split(",")]
+MAX_TEAM_SIZE = int(os.getenv("MAX_TEAM_SIZE", 12))
+MAX_LEADERS_PER_TEAM = int(os.getenv("MAX_LEADERS_PER_TEAM", 2))
+
+# --- Scoring Engine Parameters ---
+PERFECT_MATCH_THRESHOLD=float(os.getenv("PERFECT_MATCH_THRESHOLD", 0.95))
+PERFECT_MATCH_BONUS=float(os.getenv("PERFECT_MATCH_BONUS", 0.25))
+MID_MATCH_THRESHOLD_LOW=float(os.getenv("MID_MATCH_THRESHOLD_LOW", 0.4))
+MID_MATCH_THRESHOLD_HIGH=float(os.getenv("MID_MATCH_THRESHOLD_HIGH", 0.6))
+MID_MATCH_BONUS_INCREMENT=float(os.getenv("MID_MATCH_BONUS_INCREMENT", 0.01))
+MID_MATCH_BONUS_CAP=float(os.getenv("MID_MATCH_BONUS_CAP", 0.05))
+MIN_CATEGORY_SCORE_THRESHOLD = float(os.getenv("MIN_CATEGORY_SCORE_THRESHOLD", 0.1))
+MIN_TIMEZONE_SCORE_THRESHOLD = float(os.getenv("MIN_TIMEZONE_SCORE_THRESHOLD", 0.55))
 
 # Model Lists
 HUGGINGFACE_MODELS = [
@@ -91,30 +118,3 @@ OPENROUTER_MODELS = [
   "mistralai/mistral-small-24b-instruct-2501:free",
   "mistralai/mistral-7b-instruct:free",
 ]
-
-# Default model if none is set in the server's settings
-DEFAULT_AI_MODEL = os.getenv("DEFAULT_AI_MODEL", "gemini-2.5-flash")
-
-AI_TIMEOUT = int(os.getenv("AI_TIMEOUT", 30))
-
-# --- Team & Server Configuration ---
-REACTION_EMOJI=os.getenv("REACTION_EMOJI", "✅")
-MODERATOR_ROLES = [role.strip() for role in os.getenv("MODERATOR_ROLES", "").split(",")]
-EXCLUDED_TEAM_ROLES = [role.strip() for role in os.getenv("EXCLUDED_TEAM_ROLES", "").split(",")]
-MAX_TEAM_SIZE = int(os.getenv("MAX_TEAM_SIZE", 12))
-MAX_LEADERS_PER_TEAM = int(os.getenv("MAX_LEADERS_PER_TEAM", 2))
-
-# --- Database Collection Names ---
-SETTINGS_COLLECTION=os.getenv("SETTINGS_COLLECTION", "settings")
-TEAMS_COLLECTION =os.getenv("TEAMS_COLLECTION ", "teams")
-UNREGISTERED_MEMBERS_COLLECTION=os.getenv("UNREGISTERED_MEMBERS_COLLECTION", "unregistered_members")
-
-# --- Scoring Engine Parameters ---
-PERFECT_MATCH_THRESHOLD=float(os.getenv("PERFECT_MATCH_THRESHOLD", 0.95))
-PERFECT_MATCH_BONUS=float(os.getenv("PERFECT_MATCH_BONUS", 0.25))
-MID_MATCH_THRESHOLD_LOW=float(os.getenv("MID_MATCH_THRESHOLD_LOW", 0.4))
-MID_MATCH_THRESHOLD_HIGH=float(os.getenv("MID_MATCH_THRESHOLD_HIGH", 0.6))
-MID_MATCH_BONUS_INCREMENT=float(os.getenv("MID_MATCH_BONUS_INCREMENT", 0.01))
-MID_MATCH_BONUS_CAP=float(os.getenv("MID_MATCH_BONUS_CAP", 0.05))
-MIN_CATEGORY_SCORE_THRESHOLD = float(os.getenv("MIN_CATEGORY_SCORE_THRESHOLD", 0.1))
-MIN_TIMEZONE_SCORE_THRESHOLD = float(os.getenv("MIN_TIMEZONE_SCORE_THRESHOLD", 0.55))
