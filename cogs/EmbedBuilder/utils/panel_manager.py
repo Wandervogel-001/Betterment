@@ -1,5 +1,5 @@
 import discord
-from ..ui.manager_view import MainPanelView
+from ..ui.main_panel_view import MainPanelView
 
 class PanelManager:
     def __init__(self, embed_service):

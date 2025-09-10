@@ -1,7 +1,6 @@
 import discord
 from discord.ui import View, Button
-from ..ui.modals import CreateEmbedModal, EditEmbedModal, DeleteEmbedModal
-
+from ..ui.main_panel_modals import CreateEmbedModal, EditEmbedModal, DeleteEmbedModal, RenameEmbedModal, ManageEmbedModal
 
 # ========== Main Panel View ==========
 class MainPanelView(View):
@@ -16,6 +15,9 @@ class MainPanelView(View):
         self.add_item(CreateNewEmbedButton(self.embed_service, self.panel_manager))
         self.add_item(EditEmbedButton(self.embed_service))
         self.add_item(DeleteEmbedButton(self.embed_service, self.panel_manager))
+        # Row 1: Embed Management
+        self.add_item(ManageEmbedButton(embed_service, panel_manager))
+        self.add_item(RenameEmbedButton(self.embed_service, self.panel_manager))
 
 
 # ========== Create Button ==========
@@ -46,7 +48,6 @@ class EditEmbedButton(Button):
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.send_modal(EditEmbedModal(self.embed_service))
 
-
 # ========== Delete Button ==========
 class DeleteEmbedButton(Button):
     def __init__(self, embed_service, panel_manager):
@@ -60,3 +61,33 @@ class DeleteEmbedButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.send_modal(DeleteEmbedModal(self.embed_service, self.panel_manager))
+
+# ========== Manage Embed Button ==========
+class ManageEmbedButton(Button):
+    def __init__(self, embed_service, panel_manager):
+        super().__init__(
+            label="⚙️ Manage Embed",
+            style=discord.ButtonStyle.gray,
+            custom_id="embed:manage",
+            row=1
+        )
+        self.embed_service = embed_service
+        self.panel_manager = panel_manager
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(ManageEmbedModal(self.embed_service))
+
+# ========== Rename Button ==========
+class RenameEmbedButton(Button):
+    def __init__(self, embed_service, panel_manager):
+        super().__init__(
+            label="✒️ Rename Embed",
+            style=discord.ButtonStyle.secondary,
+            custom_id="embed:rename",
+            row=1
+        )
+        self.embed_service = embed_service
+        self.panel_manager = panel_manager
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(RenameEmbedModal(self.embed_service, self.panel_manager))

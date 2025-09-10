@@ -1,8 +1,9 @@
 import discord
 from discord.ui import Modal, TextInput
 import re
+from datetime import datetime, timezone
 
-class TitleDescModal(Modal, title="Edit Title & Description"):
+class TitleDescModal(Modal, title="Edit Title, URL & Description"):
     def __init__(self, embed_service, embed_name: str, embed: discord.Embed, buttons: list[dict], selected_field_index: int | None, selected_button_index: int | None):
         super().__init__()
         self.embed_service = embed_service
@@ -14,13 +15,19 @@ class TitleDescModal(Modal, title="Edit Title & Description"):
 
         self.title_input = TextInput(label="Title", default=embed.title or "", required=False, max_length=256)
         self.add_item(self.title_input)
+        self.url_input = TextInput(label="Title URL (Optional)", placeholder="e.g. https://discord.com", default=embed.url or "", required=False)
+        self.add_item(self.url_input)
         self.desc_input = TextInput(label="Description", style=discord.TextStyle.paragraph, default=embed.description or "", required=False, max_length=4000)
         self.add_item(self.desc_input)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from ..ui.editor_view import EmbedEditorView
+        from .embed_editor_view import EmbedEditorView
+
+        url_value = self.url_input.value.strip()
+
         self.embed.title = self.title_input.value
         self.embed.description = self.desc_input.value
+        self.embed.url = url_value if url_value else None
 
         await interaction.response.edit_message(
             embed=self.embed,
@@ -48,12 +55,12 @@ class ColorModal(Modal, title="Edit Embed Color"):
         self.add_item(self.color_input)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from ..ui.editor_view import EmbedEditorView
+        from .embed_editor_view import EmbedEditorView
         color_str = self.color_input.value.strip()
         color = await self.parse_color(color_str)
 
         if not color:
-            await interaction.response.send_message(f"⌘ Invalid color format: `{color_str}`", ephemeral=True)
+            await interaction.response.send_message(f"❌ Invalid color format: `{color_str}`", ephemeral=True)
             return
 
         self.embed.color = color
@@ -113,9 +120,9 @@ class AddFieldModal(Modal, title="Add a New Field"):
         self.add_item(self.field_inline)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from ..ui.editor_view import EmbedEditorView
+        from .embed_editor_view import EmbedEditorView
         if len(self.embed.fields) >= 25:
-            await interaction.response.send_message("⌘ **Limit Reached:** You cannot have more than 25 fields.", ephemeral=True)
+            await interaction.response.send_message("❌ **Limit Reached:** You cannot have more than 25 fields.", ephemeral=True)
             return
 
         name = self.field_name.value
@@ -154,7 +161,7 @@ class EditFieldModal(Modal, title="Edit Field"):
         self.add_item(self.field_inline)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from ..ui.editor_view import EmbedEditorView
+        from .embed_editor_view import EmbedEditorView
         name = self.field_name.value
         value = self.field_value.value
         inline = self.field_inline.value.lower().strip() != 'no'
@@ -191,7 +198,7 @@ class ImageModal(Modal, title="Set Thumbnail & Image"):
         self.add_item(self.image_url)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from ..ui.editor_view import EmbedEditorView
+        from .embed_editor_view import EmbedEditorView
         thumb_url = self.thumbnail_url.value.strip()
         img_url = self.image_url.value.strip()
         self.embed.set_thumbnail(url=thumb_url if thumb_url else None)
@@ -231,7 +238,7 @@ class AuthorModal(Modal, title="Set Embed Author"):
         self.add_item(self.author_icon_url)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from ..ui.editor_view import EmbedEditorView
+        from .embed_editor_view import EmbedEditorView
         name = self.author_name.value.strip()
         url = self.author_url.value.strip()
         icon_url = self.author_icon_url.value.strip()
@@ -263,18 +270,94 @@ class FooterModal(Modal, title="Set Embed Footer"):
         self.selected_field_index = selected_field_index
         self.selected_button_index = selected_button_index
 
+        # Get default values, handling cases where they might not exist
         footer_text_default = embed.footer.text if embed.footer and embed.footer.text else ""
-        self.footer_text = TextInput(label="Footer Text", placeholder="Leave empty to remove the footer.", default=footer_text_default, required=False, max_length=2048)
+        footer_icon_default = embed.footer.icon_url if embed.footer and embed.footer.icon_url else ""
+        timestamp_default = embed.timestamp.strftime('%d/%m/%Y, %H:%M') if embed.timestamp else ""
+
+        self.footer_text = TextInput(
+            label="Footer Text",
+            placeholder="Leave empty to remove footer elements.",
+            default=footer_text_default,
+            required=False,
+            max_length=2048
+        )
         self.add_item(self.footer_text)
 
-    async def on_submit(self, interaction: discord.Interaction):
-        from ..ui.editor_view import EmbedEditorView
-        text = self.footer_text.value.strip()
+        self.footer_icon_url = TextInput(
+            label="Footer Icon URL (Optional)",
+            placeholder="URL for the icon next to the footer text.",
+            default=footer_icon_default,
+            required=False
+        )
+        self.add_item(self.footer_icon_url)
 
-        if not text:
-            self.embed.set_footer(text=None)
-        else:
-            self.embed.set_footer(text=text)
+        self.timestamp = TextInput(
+            label="Timestamp (Optional)",
+            placeholder="today, 10/09/2025, 11/09/2025, 18:50, or UNIX",
+            default=timestamp_default,
+            required=False
+        )
+        self.add_item(self.timestamp)
+
+    def _parse_timestamp(self, value: str) -> datetime | None:
+        """Parses a string into a timezone-aware datetime object."""
+        value = value.strip().lower()
+        if not value:
+            return None
+
+        if value == "today":
+            return datetime.now(timezone.utc)
+
+        if value.isdigit():
+            try:
+                # Convert UNIX timestamp to datetime object
+                return datetime.fromtimestamp(int(value), tz=timezone.utc)
+            except (ValueError, OSError):
+                return None # Handles invalid or out-of-range timestamps
+
+        # Try parsing combined and date-only formats
+        formats_to_try = ['%d/%m/%y, %H:%M', '%d/%m/%Y, %H:%M', '%d/%m/%y', '%d/%m/%Y']
+        for fmt in formats_to_try:
+            try:
+                dt_naive = datetime.strptime(value, fmt)
+                # Make the datetime object timezone-aware (UTC)
+                return dt_naive.replace(tzinfo=timezone.utc)
+            except ValueError:
+                continue
+
+        return None # Return None if all parsing attempts fail
+
+    async def on_submit(self, interaction: discord.Interaction):
+        from .embed_editor_view import EmbedEditorView
+
+        text = self.footer_text.value.strip()
+        icon_url = self.footer_icon_url.value.strip()
+        timestamp_str = self.timestamp.value.strip()
+
+        parsed_timestamp = self._parse_timestamp(timestamp_str)
+
+        # If the user provided a timestamp string but it couldn't be parsed, show an error.
+        if timestamp_str and parsed_timestamp is None:
+            await interaction.response.send_message(
+                f"❌ **Invalid Timestamp Format:** `{timestamp_str}`\n"
+                "Please use one of these formats:\n"
+                "• `today`\n"
+                "• `dd/mm/yyyy` (e.g., `10/09/2025`)\n"
+                "• `dd/mm/yyyy, HH:MM` (e.g., `11/09/2025, 18:50`)\n"
+                "• A UNIX timestamp (e.g., `1757523955`)",
+                ephemeral=True
+            )
+            return
+
+        # Set the footer text and icon URL
+        self.embed.set_footer(
+            text=text if text else None,
+            icon_url=icon_url if icon_url else None
+        )
+
+        # Set the timestamp directly on the embed object
+        self.embed.timestamp = parsed_timestamp
 
         await interaction.response.edit_message(
             embed=self.embed,
@@ -311,16 +394,16 @@ class AddButtonModal(Modal, title="Add a New Button"):
         self.add_item(self.row)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from ..ui.editor_view import EmbedEditorView
+        from .embed_editor_view import EmbedEditorView
 
         if len(self.buttons) >= 25:
-            await interaction.response.send_message("⌘ **Limit Reached:** You cannot have more than 25 buttons.", ephemeral=True)
+            await interaction.response.send_message("❌ **Limit Reached:** You cannot have more than 25 buttons.", ephemeral=True)
             return
 
         style_str = self.style.value.lower().strip()
         valid_styles = {"primary": 1, "secondary": 2, "success": 3, "danger": 4, "link": 5}
         if style_str not in valid_styles:
-            await interaction.response.send_message(f"⌘ **Invalid Style:** Style must be one of `primary`, `secondary`, `success`, `danger`, or `link`.", ephemeral=True)
+            await interaction.response.send_message(f"❌ **Invalid Style:** Style must be one of `primary`, `secondary`, `success`, `danger`, or `link`.", ephemeral=True)
             return
 
         button_style = discord.ButtonStyle(valid_styles[style_str])
@@ -330,7 +413,7 @@ class AddButtonModal(Modal, title="Add a New Button"):
         if button_style == discord.ButtonStyle.link:
             url = self.custom_id_or_url.value.strip()
             if not (url.startswith("http://") or url.startswith("https://")):
-                 await interaction.response.send_message(f"⌘ **Invalid URL:** The URL must start with `http://` or `https://` for link buttons.", ephemeral=True)
+                 await interaction.response.send_message(f"❌ **Invalid URL:** The URL must start with `http://` or `https://` for link buttons.", ephemeral=True)
                  return
         else:
             custom_id = self.custom_id_or_url.value.strip()
@@ -342,7 +425,7 @@ class AddButtonModal(Modal, title="Add a New Button"):
                 row = int(row_val)
                 if not 0 <= row <= 4: raise ValueError
             except ValueError:
-                await interaction.response.send_message("⌘ **Invalid Row:** Row must be a number between 0 and 4.", ephemeral=True)
+                await interaction.response.send_message("❌ **Invalid Row:** Row must be a number between 0 and 4.", ephemeral=True)
                 return
 
         new_button = {"label": self.label.value, "style": style_str, "custom_id": custom_id, "url": url, "row": row}
@@ -386,12 +469,12 @@ class EditButtonModal(Modal, title="Edit a Button"):
         self.add_item(self.row)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from ..ui.editor_view import EmbedEditorView
+        from .embed_editor_view import EmbedEditorView
 
         style_str = self.style.value.lower().strip()
         valid_styles = {"primary": 1, "secondary": 2, "success": 3, "danger": 4, "link": 5}
         if style_str not in valid_styles:
-            await interaction.response.send_message(f"⌘ **Invalid Style:** Style must be one of `primary`, `secondary`, `success`, `danger`, or `link`.", ephemeral=True)
+            await interaction.response.send_message(f"❌ **Invalid Style:** Style must be one of `primary`, `secondary`, `success`, `danger`, or `link`.", ephemeral=True)
             return
 
         button_style = discord.ButtonStyle(valid_styles[style_str])
@@ -401,7 +484,7 @@ class EditButtonModal(Modal, title="Edit a Button"):
         if button_style == discord.ButtonStyle.link:
             url = self.custom_id_or_url.value.strip()
             if not (url.startswith("http://") or url.startswith("https://")):
-                 await interaction.response.send_message(f"⌘ **Invalid URL:** The URL must start with `http://` or `https://` for link buttons.", ephemeral=True)
+                 await interaction.response.send_message(f"❌ **Invalid URL:** The URL must start with `http://` or `https://` for link buttons.", ephemeral=True)
                  return
         else:
             custom_id = self.custom_id_or_url.value.strip()
@@ -413,7 +496,7 @@ class EditButtonModal(Modal, title="Edit a Button"):
                 row = int(row_val)
                 if not 0 <= row <= 4: raise ValueError
             except ValueError:
-                await interaction.response.send_message("⌘ **Invalid Row:** Row must be a number between 0 and 4.", ephemeral=True)
+                await interaction.response.send_message("❌ **Invalid Row:** Row must be a number between 0 and 4.", ephemeral=True)
                 return
 
         updated_button = {"label": self.label.value, "style": style_str, "custom_id": custom_id, "url": url, "row": row}

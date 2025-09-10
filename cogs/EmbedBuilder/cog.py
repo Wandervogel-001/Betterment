@@ -2,7 +2,7 @@ import discord
 import logging
 from discord.ext import commands
 from discord import app_commands
-from .ui.manager_view import MainPanelView
+from .ui.main_panel_view import MainPanelView
 from .services.embed_service import EmbedService
 from .utils.panel_manager import PanelManager
 

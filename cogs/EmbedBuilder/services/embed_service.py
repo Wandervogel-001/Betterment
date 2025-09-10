@@ -59,3 +59,38 @@ class EmbedService:
         if not doc or "embeds" not in doc or embed_name not in doc["embeds"]:
             return None
         return doc["embeds"].get(embed_name)
+
+    # ========== CHANNEL ATTACHEMENT ==========
+
+    async def attach_channel(self, guild_id: str, embed_name: str, channel_id: int) -> bool:
+        """
+        Attach (or re-attach) an embed to a specific channel.
+        """
+        update_data = {f"embeds.{embed_name}.channel_id": channel_id}
+        return await self.db.update_one(
+            "embeds",
+            {"guild_id": guild_id},
+            {"$set": update_data},
+            upsert=True
+        )
+
+    async def detach_channel(self, guild_id: str, embed_name: str) -> bool:
+        """
+        Remove the channel attachment from an embed.
+        """
+        return await self.db.update_one(
+            "embeds",
+            {"guild_id": guild_id},
+            {"$unset": {f"embeds.{embed_name}.channel_id": ""}}
+        )
+
+    async def get_attached_channel(self, guild_id: str, embed_name: str) -> Optional[int]:
+        """
+        Get the channel ID an embed is attached to (if any).
+        """
+        doc = await self.db.find_one("embeds", {"guild_id": guild_id})
+        if not doc:
+            return None
+
+        embed_data = doc.get("embeds", {}).get(embed_name, {})
+        return embed_data.get("channel_id")

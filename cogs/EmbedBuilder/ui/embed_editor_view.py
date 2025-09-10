@@ -1,8 +1,7 @@
 import discord
 from discord.ui import View, Button, Select
-import re
 
-from ..ui.editor_modals import (
+from ..ui.embed_editor_modals import (
     TitleDescModal, ColorModal, AddFieldModal, EditFieldModal,
     ImageModal, AuthorModal, FooterModal, AddButtonModal, EditButtonModal
 )
@@ -171,14 +170,26 @@ class SaveButton(Button):
         embed = interaction.message.embeds[0]
         embed_name = self.view.embed_name
 
-        # Convert embed to dict and add buttons
-        config_data = embed.to_dict()
-        if 'color' in config_data:
-            config_data['color'] = embed.color.value
-        config_data['buttons'] = self.view.buttons
+        # 1. Construct the new configuration from the editor's current state.
+        new_config_data = embed.to_dict()
+        if 'color' in new_config_data:
+            new_config_data['color'] = embed.color.value
+        new_config_data['buttons'] = self.view.buttons
 
-        # Save to database
-        success = await self.view.embed_service.save_embed_config(guild_id, embed_name, config_data)
+        # 2. Fetch the existing configuration from the database.
+        existing_doc = await self.view.embed_service.get_embed_config(guild_id, embed_name)
+        existing_config_data = existing_doc.get('config', {}) if existing_doc else {}
+
+        # 3. Compare the two configurations. If they are identical, do nothing.
+        if existing_config_data == new_config_data:
+            await interaction.response.send_message(
+                "⚠️ **No Changes!** There are no new changes to save.",
+                ephemeral=True
+            )
+            return
+
+        # 4. If there are changes, save the new configuration to the database.
+        success = await self.view.embed_service.save_embed_config(guild_id, embed_name, new_config_data)
 
         if success:
             await interaction.response.send_message(f"✅ **Saved!** Your changes to `{embed_name}` have been saved.", ephemeral=True)
