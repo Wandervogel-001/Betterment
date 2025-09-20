@@ -157,9 +157,10 @@ class RenameEmbedModal(Modal, title="Rename an Embed"):
             await self.panel_manager.refresh_panel_embed(interaction.guild, panel_data["message_id"])
 
 class ManageEmbedModal(Modal, title="Manage Embed"):
-    def __init__(self, embed_service):
+    def __init__(self, embed_service, embed_sender):
         super().__init__()
         self.embed_service = embed_service
+        self.embed_sender = embed_sender
 
     embed_name = TextInput(
         label="Embed Name",
@@ -184,5 +185,5 @@ class ManageEmbedModal(Modal, title="Manage Embed"):
             color=discord.Color.dark_teal()
         )
 
-        view = ManageSingleEmbedView(name, self.embed_service)
+        view = ManageSingleEmbedView(name, self.embed_service, self.embed_sender)
         await interaction.response.send_message(embed=preview_embed, view=view, ephemeral=True)

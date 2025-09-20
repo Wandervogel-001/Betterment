@@ -6,9 +6,10 @@ from ..ui.main_panel_modals import CreateEmbedModal, EditEmbedModal, DeleteEmbed
 class MainPanelView(View):
     """Persistent Embed Management Panel with primary action buttons."""
 
-    def __init__(self, embed_service, panel_manager):
+    def __init__(self, embed_service, embed_sender, panel_manager):
         super().__init__(timeout=None)
         self.embed_service = embed_service
+        self.embed_sender = embed_sender
         self.panel_manager = panel_manager
 
         # Row 0: Core CRUD Actions
@@ -16,7 +17,7 @@ class MainPanelView(View):
         self.add_item(EditEmbedButton(self.embed_service))
         self.add_item(DeleteEmbedButton(self.embed_service, self.panel_manager))
         # Row 1: Embed Management
-        self.add_item(ManageEmbedButton(embed_service, panel_manager))
+        self.add_item(ManageEmbedButton(self.embed_service, self.embed_sender))
         self.add_item(RenameEmbedButton(self.embed_service, self.panel_manager))
 
 
@@ -64,7 +65,7 @@ class DeleteEmbedButton(Button):
 
 # ========== Manage Embed Button ==========
 class ManageEmbedButton(Button):
-    def __init__(self, embed_service, panel_manager):
+    def __init__(self, embed_service, embed_sender):
         super().__init__(
             label="⚙️ Manage Embed",
             style=discord.ButtonStyle.gray,
@@ -72,10 +73,10 @@ class ManageEmbedButton(Button):
             row=1
         )
         self.embed_service = embed_service
-        self.panel_manager = panel_manager
+        self.embed_sender = embed_sender
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(ManageEmbedModal(self.embed_service))
+        await interaction.response.send_modal(ManageEmbedModal(self.embed_service, self.embed_sender))
 
 # ========== Rename Button ==========
 class RenameEmbedButton(Button):

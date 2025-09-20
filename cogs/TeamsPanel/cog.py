@@ -324,4 +324,3 @@ class TeamsCog(commands.Cog):
 async def setup(bot: commands.Bot):
     """Setup function to add the cog to the bot."""
     await bot.add_cog(TeamsCog(bot))
-    logger.info("TeamsCog loaded successfully.")

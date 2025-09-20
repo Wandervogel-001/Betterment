@@ -12,7 +12,7 @@ DB_NAME = os.getenv("DB_NAME", "Betterment")
 SETTINGS_COLLECTION=os.getenv("SETTINGS_COLLECTION", "settings")
 TEAMS_COLLECTION =os.getenv("TEAMS_COLLECTION ", "teams")
 UNREGISTERED_MEMBERS_COLLECTION=os.getenv("UNREGISTERED_MEMBERS_COLLECTION", "unregistered_members")
-EMBEDS_COLLECTION=os.getenv("EMBED_MANAGER_COLLECTION", "embeds")
+EMBEDS_COLLECTION=os.getenv("EMBEDS_COLLECTION", "embeds")
 
 # --- AI Model Configuration ---
 

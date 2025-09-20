@@ -276,4 +276,3 @@ class SettingsCog(commands.Cog):
 async def setup(bot: commands.Bot):
     """Setup function to add the cog to the bot."""
     await bot.add_cog(SettingsCog(bot))
-    logger.info("SettingsCog loaded successfully.")

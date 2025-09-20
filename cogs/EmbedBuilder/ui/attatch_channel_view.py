@@ -1,78 +1,55 @@
 import discord
-from discord.ui import View, Select, Button
+from discord.ui import View, ChannelSelect, Button
 
 class AttachChannelView(View):
-    def __init__(self, embed_service, embed_name, guild, page=0, per_page=25):
-        super().__init__(timeout=60)
+    def __init__(self, embed_service, embed_name, guild, attached, page=0, per_page=25):
+        super().__init__(timeout=None)
         self.embed_service = embed_service
         self.embed_name = embed_name
         self.guild = guild
         self.page = page
         self.per_page = per_page
+        self.attached = attached
 
-        channels = guild.text_channels
-        start = page * per_page
-        end = start + per_page
-        sliced = channels[start:end]
+        self.add_item(ChannelMultiSelect(self.embed_service, self.embed_name, self.attached))
 
-        # Dropdown
-        self.add_item(ChannelSelect(embed_service, embed_name, sliced, page))
-
-        # Pagination Buttons
-        if start > 0:
-            self.add_item(PrevPageButton(embed_service, embed_name, guild, page))
-        if end < len(channels):
-            self.add_item(NextPageButton(embed_service, embed_name, guild, page))
-
-class ChannelSelect(discord.ui.Select):
-    def __init__(self, embed_service, embed_name, channels, page=0):
+class ChannelMultiSelect(ChannelSelect):
+    def __init__(self, embed_service, embed_name: str, attached: list[int]):
         self.embed_service = embed_service
         self.embed_name = embed_name
-        self.page = page
 
-        options = [
-            discord.SelectOption(label=ch.name, value=str(ch.id))
-            for ch in channels
-        ]
+        # Convert attached channel IDs to SelectDefaultValue objects for default selection
+        default_values = [discord.SelectDefaultValue(id=channel_id, type=discord.SelectDefaultValueType.channel) for channel_id in attached]
 
         super().__init__(
-            placeholder="Select a channel...",
-            options=options,
-            custom_id=f"attach_channel:{embed_name}:{page}"
+            placeholder="Select one or more channels to attach...",
+            min_values=0,
+            max_values=25,  # Discord's maximum for select menus
+            channel_types=[discord.ChannelType.text],  # Only text channels for embed sending
+            default_values=default_values,
+            custom_id="embed:attach_channels"
         )
 
     async def callback(self, interaction: discord.Interaction):
-        channel_id = int(self.values[0])
         guild_id = str(interaction.guild.id)
+        # Get selected channel IDs from the ChannelSelect values
+        chosen_channels = [channel.id for channel in self.values]
 
-        await self.embed_service.attach_channel(guild_id, self.embed_name, channel_id)
+        await self.embed_service.clear_channels(guild_id, self.embed_name)
+        for channel_id in chosen_channels:
+            await self.embed_service.attach_channel(guild_id, self.embed_name, channel_id)
 
-        await interaction.response.send_message(
-            f"📌 Embed `{self.embed_name}` attached to <#{channel_id}>",
-            ephemeral=True
+        mentions = ", ".join(f"<#{cid}>" for cid in chosen_channels)
+
+        # Create new view with updated attached channels
+        new_view = AttachChannelView(
+            self.embed_service,
+            self.embed_name,
+            interaction.guild,
+            attached=chosen_channels
         )
 
-class PrevPageButton(Button):
-    def __init__(self, embed_service, embed_name, guild, page):
-        super().__init__(label="⏮️ Prev", style=discord.ButtonStyle.secondary)
-        self.embed_service = embed_service
-        self.embed_name = embed_name
-        self.guild = guild
-        self.page = page
-
-    async def callback(self, interaction: discord.Interaction):
-        view = AttachChannelView(self.embed_service, self.embed_name, self.guild, self.page - 1)
-        await interaction.response.edit_message(view=view)
-
-
-class NextPageButton(Button):
-    def __init__(self, embed_service, embed_name, guild, page):
-        super().__init__(label="⏭️ Next", style=discord.ButtonStyle.secondary)
-        self.embed_service = embed_service
-        self.embed_name = embed_name
-        self.guild = guild
-        self.page = page
-
-    async def callback(self, interaction: discord.Interaction):
-        view = AttachChannelView(self.embed_service, self.embed_name, self.guild, self.page + 1)
-        await interaction.response.edit_message(view=view)
+        await interaction.response.edit_message(
+            content=f"<:attachment:1417215411287494706> Embed `{self.embed_name}` is now attached to: {mentions if mentions else '`None`'}",
+            view=new_view
+        )

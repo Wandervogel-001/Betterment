@@ -2,8 +2,9 @@ import discord
 from ..ui.main_panel_view import MainPanelView
 
 class PanelManager:
-    def __init__(self, embed_service):
+    def __init__(self, embed_service, embed_sender):
         self.embed_service = embed_service
+        self.embed_sender = embed_sender
 
     async def build_embed_panel(self, guild_id: int) -> discord.Embed:
         """Builds the Embed Manager panel embed with registered embeds."""
@@ -46,6 +47,6 @@ class PanelManager:
             return None
 
         new_embed = await self.build_embed_panel(guild.id)
-        view = MainPanelView(self.embed_service, self)
+        view = MainPanelView(self.embed_service, self.embed_sender, self)
         await msg.edit(embed=new_embed, view=view)
         return msg
