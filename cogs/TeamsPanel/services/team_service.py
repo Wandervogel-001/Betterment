@@ -185,3 +185,22 @@ class TeamDatabaseService:
         if settings_doc and "channel" in settings_doc:
             return settings_doc["channel"].get("communication_channel")
         return None
+
+    async def get_setting_field(self, guild_id: int, section: str, field: str) -> Optional[int]:
+        """
+        Retrieves a nested field value from the guild's settings document.
+        """
+        settings_doc = await self.db.find_one(SETTINGS_COLLECTION, {"guild_id": guild_id})
+        if not settings_doc:
+            return None
+        section_data = settings_doc.get(section, {})
+        if not isinstance(section_data, dict):
+            return None
+        value = section_data.get(field)
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return value
+

@@ -3,7 +3,6 @@ from discord.ui import Modal, TextInput
 import re
 import aiohttp
 
-
 class WebhookConfigModal(Modal, title="Webhook Configuration"):
     def __init__(self,  embed_name: str, embed_service, embed_sender):
         super().__init__()

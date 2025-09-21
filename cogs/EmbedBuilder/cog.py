@@ -3,7 +3,7 @@ import logging
 from discord.ext import commands
 from discord import app_commands
 
-from .ui.main_panel_view import MainPanelView
+from .ui.main_panel.panel_view import MainPanelView
 from .services.embed_service import EmbedService
 from .services.button_action_engine import ButtonActionEngine
 from .services.embed_sender import EmbedSender
@@ -73,7 +73,12 @@ class EmbedBuilderCog(commands.Cog):
 
         # Create new panel
         embed = await self.panel_manager.build_embed_panel(interaction.guild.id)
-        view = MainPanelView(self.embed_service, self.embed_sender, self.panel_manager)
+        view = await MainPanelView.from_db(
+            self.embed_service,
+            self.embed_sender,
+            self.panel_manager,
+            interaction.guild.id
+        )
         msg = await interaction.channel.send(embed=embed, view=view)
         await self.embed_service.save_embed_panel(interaction.guild.id, interaction.channel.id, msg.id)
         await interaction.followup.send("✅ Embed management panel created!", ephemeral=True)

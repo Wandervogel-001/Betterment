@@ -21,7 +21,7 @@ class TitleDescModal(Modal, title="Edit Title, URL & Description"):
         self.add_item(self.desc_input)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from .embed_editor_view import EmbedEditorView
+        from .editor_interface import EmbedEditorView
 
         url_value = self.url_input.value.strip()
 
@@ -55,7 +55,7 @@ class ColorModal(Modal, title="Edit Embed Color"):
         self.add_item(self.color_input)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from .embed_editor_view import EmbedEditorView
+        from .editor_interface import EmbedEditorView
         color_str = self.color_input.value.strip()
         color = await self.parse_color(color_str)
 
@@ -120,7 +120,7 @@ class AddFieldModal(Modal, title="Add a New Field"):
         self.add_item(self.field_inline)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from .embed_editor_view import EmbedEditorView
+        from .editor_interface import EmbedEditorView
         if len(self.embed.fields) >= 25:
             await interaction.response.send_message("❌ **Limit Reached:** You cannot have more than 25 fields.", ephemeral=True)
             return
@@ -161,7 +161,7 @@ class EditFieldModal(Modal, title="Edit Field"):
         self.add_item(self.field_inline)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from .embed_editor_view import EmbedEditorView
+        from .editor_interface import EmbedEditorView
         name = self.field_name.value
         value = self.field_value.value
         inline = self.field_inline.value.lower().strip() != 'no'
@@ -198,7 +198,7 @@ class ImageModal(Modal, title="Set Thumbnail & Image"):
         self.add_item(self.image_url)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from .embed_editor_view import EmbedEditorView
+        from .editor_interface import EmbedEditorView
         thumb_url = self.thumbnail_url.value.strip()
         img_url = self.image_url.value.strip()
         self.embed.set_thumbnail(url=thumb_url if thumb_url else None)
@@ -238,7 +238,7 @@ class AuthorModal(Modal, title="Set Embed Author"):
         self.add_item(self.author_icon_url)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from .embed_editor_view import EmbedEditorView
+        from .editor_interface import EmbedEditorView
         name = self.author_name.value.strip()
         url = self.author_url.value.strip()
         icon_url = self.author_icon_url.value.strip()
@@ -329,7 +329,7 @@ class FooterModal(Modal, title="Set Embed Footer"):
         return None # Return None if all parsing attempts fail
 
     async def on_submit(self, interaction: discord.Interaction):
-        from .embed_editor_view import EmbedEditorView
+        from .editor_interface import EmbedEditorView
 
         text = self.footer_text.value.strip()
         icon_url = self.footer_icon_url.value.strip()
@@ -394,7 +394,7 @@ class AddButtonModal(Modal, title="Add a New Button"):
         self.add_item(self.row)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from .embed_editor_view import EmbedEditorView
+        from .editor_interface import EmbedEditorView
 
         if len(self.buttons) >= 25:
             await interaction.response.send_message("❌ **Limit Reached:** You cannot have more than 25 buttons.", ephemeral=True)
@@ -469,7 +469,7 @@ class EditButtonModal(Modal, title="Edit a Button"):
         self.add_item(self.row)
 
     async def on_submit(self, interaction: discord.Interaction):
-        from .embed_editor_view import EmbedEditorView
+        from .editor_interface import EmbedEditorView
 
         style_str = self.style.value.lower().strip()
         valid_styles = {"primary": 1, "secondary": 2, "success": 3, "danger": 4, "link": 5}

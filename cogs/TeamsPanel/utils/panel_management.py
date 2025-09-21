@@ -25,7 +25,7 @@ class PanelManager:
         """Builds the main team management panel embed with up-to-date team info."""
         teams = await self.team_manager.get_all_teams(guild_id)
         is_marathon_active = await self.team_manager.is_marathon_active(guild_id)
-        embed = discord.Embed(title="🏆 Team Management Panel", color=discord.Color.blue())
+        embed = discord.Embed(title="🏆 Team Management Panel", color=discord.Color(int("242429",16)))
 
         if not teams:
             embed.description = "No teams are registered yet. Use `/create_team` or the `Fetch Data` button to find teams."

@@ -1,11 +1,17 @@
 import discord
 from discord.ui import View, Button, Select
 
-from ..ui.embed_editor_modals import (
+from .editor_modals import (
     TitleDescModal, ColorModal, AddFieldModal, EditFieldModal,
     ImageModal, AuthorModal, FooterModal, AddButtonModal, EditButtonModal
 )
-from ..services.embed_service import EmbedService
+from ...services.embed_service import EmbedService
+
+from emojis import (
+    REMOVE2, PLUS, SAVE2, EDIT2, EDIT, TRASH,
+    IMAGES1, COLOR1, FOOTER, TITLE, AUTHOR,
+    HAMBURGER_MENU
+)
 
 # ========== Embed Editor View ==========
 class EmbedEditorView(View):
@@ -29,26 +35,28 @@ class EmbedEditorView(View):
         # Row 1: Field Management
         self.add_item(FieldSelect(embed, selected_index=self.selected_field_index))
 
-        # Row 2: Field Actions
+        # Row 2: Field Actions & save
         self.add_item(AddFieldButton())
         self.add_item(EditFieldButton(disabled=self.selected_field_index is None))
         self.add_item(RemoveFieldButton(disabled=self.selected_field_index is None))
+        self.add_item(SaveButton())
 
         # Row 3: Button Management
         self.add_item(ButtonSelect(self.buttons, selected_index=self.selected_button_index))
 
-        # Row 4: Button Actions & Save
+        # Row 4: Button Actions
         self.add_item(AddButtonButton())
         self.add_item(EditButton(disabled=self.selected_button_index is None))
         self.add_item(DeleteButton(disabled=self.selected_button_index is None))
-        self.add_item(SaveButton())
+        self.add_item(ManageButtonActionsButton(disabled=self.selected_button_index is None))
+
 
 
 # ========== Buttons ==========
 
 class TitleDescButton(Button):
     def __init__(self):
-        super().__init__(label="📄 Title & Desc", style=discord.ButtonStyle.secondary, custom_id="embed:title_desc", row=0)
+        super().__init__(label="Title & Desc", emoji=TITLE, style=discord.ButtonStyle.secondary, custom_id="embed:title_desc", row=0)
     async def callback(self, interaction: discord.Interaction):
         embed = interaction.message.embeds[0]
         await interaction.response.send_modal(
@@ -57,7 +65,7 @@ class TitleDescButton(Button):
 
 class ColorButton(Button):
     def __init__(self):
-        super().__init__(label="🎨 Color", style=discord.ButtonStyle.secondary, custom_id="embed:color", row=0)
+        super().__init__(label="Color", emoji=COLOR1, style=discord.ButtonStyle.secondary, custom_id="embed:color", row=0)
     async def callback(self, interaction: discord.Interaction):
         embed = interaction.message.embeds[0]
         await interaction.response.send_modal(
@@ -66,7 +74,7 @@ class ColorButton(Button):
 
 class AddFieldButton(Button):
     def __init__(self):
-        super().__init__(label="➕ Add Field", style=discord.ButtonStyle.success, custom_id="embed:add_field", row=2)
+        super().__init__(label="Add Field", emoji=PLUS, style=discord.ButtonStyle.success, custom_id="embed:add_field", row=2)
     async def callback(self, interaction: discord.Interaction):
         embed = interaction.message.embeds[0]
         await interaction.response.send_modal(
@@ -75,7 +83,7 @@ class AddFieldButton(Button):
 
 class EditFieldButton(Button):
     def __init__(self, disabled: bool):
-        super().__init__(label="✏️ Edit Field", style=discord.ButtonStyle.primary, custom_id="embed:edit_field", row=2, disabled=disabled)
+        super().__init__(label="Edit", emoji=EDIT2, style=discord.ButtonStyle.primary, custom_id="embed:edit_field", row=2, disabled=disabled)
     async def callback(self, interaction: discord.Interaction):
         if self.view.selected_field_index is None:
             await interaction.response.send_message("⚠️ Please select a field to edit.", ephemeral=True)
@@ -87,7 +95,14 @@ class EditFieldButton(Button):
 
 class RemoveFieldButton(Button):
     def __init__(self, disabled: bool):
-        super().__init__(label="➖ Remove Field", style=discord.ButtonStyle.danger, custom_id="embed:remove_field", row=2, disabled=disabled)
+        super().__init__(
+            label="Remove",
+            emoji=REMOVE2,
+            style=discord.ButtonStyle.danger,
+            custom_id="embed:remove_field",
+            row=2,
+            disabled=disabled
+        )
     async def callback(self, interaction: discord.Interaction):
         if self.view.selected_field_index is None:
             await interaction.response.send_message("⚠️ Please select a field to remove.", ephemeral=True)
@@ -101,7 +116,7 @@ class RemoveFieldButton(Button):
 
 class ThumbnailImageButton(Button):
     def __init__(self):
-        super().__init__(label="📎 Images", style=discord.ButtonStyle.secondary, custom_id="embed:thumbnail_image", row=0)
+        super().__init__(label="Images", emoji=IMAGES1, style=discord.ButtonStyle.secondary, custom_id="embed:thumbnail_image", row=0)
     async def callback(self, interaction: discord.Interaction):
         embed = interaction.message.embeds[0]
         await interaction.response.send_modal(
@@ -110,7 +125,7 @@ class ThumbnailImageButton(Button):
 
 class AuthorButton(Button):
     def __init__(self):
-        super().__init__(label="👤 Author", style=discord.ButtonStyle.secondary, custom_id="embed:author", row=0)
+        super().__init__(label="Author", emoji=AUTHOR, style=discord.ButtonStyle.secondary, custom_id="embed:author", row=0)
     async def callback(self, interaction: discord.Interaction):
         embed = interaction.message.embeds[0]
         await interaction.response.send_modal(
@@ -119,7 +134,7 @@ class AuthorButton(Button):
 
 class FooterButton(Button):
     def __init__(self):
-        super().__init__(label="🦶 Footer", style=discord.ButtonStyle.secondary, custom_id="embed:footer", row=0)
+        super().__init__(label="Footer", emoji=FOOTER, style=discord.ButtonStyle.secondary, custom_id="embed:footer", row=0)
     async def callback(self, interaction: discord.Interaction):
         embed = interaction.message.embeds[0]
         await interaction.response.send_modal(
@@ -128,7 +143,7 @@ class FooterButton(Button):
 
 class AddButtonButton(Button):
     def __init__(self):
-        super().__init__(label="➕ Add Button", style=discord.ButtonStyle.success, custom_id="embed:add_button", row=4)
+        super().__init__(label="Add Button", emoji=PLUS, style=discord.ButtonStyle.success, custom_id="embed:add_button", row=4)
     async def callback(self, interaction: discord.Interaction):
         embed = interaction.message.embeds[0]
         await interaction.response.send_modal(
@@ -137,7 +152,7 @@ class AddButtonButton(Button):
 
 class EditButton(Button):
     def __init__(self, disabled: bool):
-        super().__init__(label="✍️ Edit Button", style=discord.ButtonStyle.primary, custom_id="embed:edit_button", row=4, disabled=disabled)
+        super().__init__(label="Edit", emoji=EDIT, style=discord.ButtonStyle.primary, custom_id="embed:edit_button", row=4, disabled=disabled)
     async def callback(self, interaction: discord.Interaction):
         if self.view.selected_button_index is None:
             await interaction.response.send_message("⚠️ Please select a button from the dropdown menu first.", ephemeral=True)
@@ -149,7 +164,7 @@ class EditButton(Button):
 
 class DeleteButton(Button):
     def __init__(self, disabled: bool):
-        super().__init__(label="➖ Delete Button", style=discord.ButtonStyle.danger, custom_id="embed:delete_button", row=4, disabled=disabled)
+        super().__init__(label="Delete", emoji=TRASH, style=discord.ButtonStyle.danger, custom_id="embed:delete_button", row=4, disabled=disabled)
     async def callback(self, interaction: discord.Interaction):
         if self.view.selected_button_index is None:
             await interaction.response.send_message("⚠️ Please select a button to delete.", ephemeral=True)
@@ -161,9 +176,56 @@ class DeleteButton(Button):
             view=EmbedEditorView(self.view.embed_service, self.view.embed_name, embed, buttons=self.view.buttons, selected_field_index=self.view.selected_field_index, selected_button_index=None)
         )
 
+class ManageButtonActionsButton(Button):
+    def __init__(self, disabled: bool):
+        super().__init__(label="Actions", emoji=HAMBURGER_MENU, style=discord.ButtonStyle.secondary, custom_id="embed:manage_button_actions", row=4, disabled=disabled)
+    async def callback(self, interaction: discord.Interaction):
+        if self.view.selected_button_index is None:
+            await interaction.response.send_message("⚠️ Please select a button from the dropdown menu first.", ephemeral=True)
+            return
+
+        selected_button_data = self.view.buttons[self.view.selected_button_index]
+
+        # Check if it's a link button (can't have actions)
+        if selected_button_data.get("style") == "link":
+            await interaction.response.send_message("ℹ️ Link buttons cannot have actions configured.", ephemeral=True)
+            return
+
+        # Check if the button has a custom_id
+        if not selected_button_data.get("custom_id"):
+            await interaction.response.send_message("❌ This button has no custom_id and cannot have actions.", ephemeral=True)
+            return
+
+        # Create a factory to return to the current editor view
+        def return_to_editor():
+            embed = interaction.message.embeds[0]
+            return EmbedEditorView(
+                self.view.embed_service,
+                self.view.embed_name,
+                embed,
+                buttons=self.view.buttons,
+                selected_field_index=self.view.selected_field_index,
+                selected_button_index=self.view.selected_button_index
+            )
+
+        # Import here to avoid circular imports
+        from ..button_actions.action_selector import ButtonSelectionView
+
+        view = ButtonSelectionView(
+            embed_name=self.view.embed_name,
+            button_data=selected_button_data,
+            embed_service=self.view.embed_service,
+            previous_view_factory=return_to_editor
+        )
+
+        await interaction.response.send_message(
+            view=view,
+            ephemeral=True
+        )
+
 class SaveButton(Button):
     def __init__(self):
-        super().__init__(label="💾 Save", style=discord.ButtonStyle.success, custom_id="embed:save", row=4)
+        super().__init__(label="Save", emoji=SAVE2, style=discord.ButtonStyle.success, custom_id="embed:save", row=2)
 
     async def callback(self, interaction: discord.Interaction):
         guild_id = str(interaction.guild.id)
@@ -246,4 +308,3 @@ class ButtonSelect(Select):
                 selected_button_index=selected_index
             )
         )
-
