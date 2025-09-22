@@ -27,10 +27,6 @@ class CreateEmbedModal(Modal, title="Create New Embed"):
 
         await self.embed_service.save_embed_config(guild_id, embed_name, empty_config)
 
-        panel_data = await self.embed_service.get_embed_panel(interaction.guild.id)
-        if panel_data:
-            await self.panel_manager.refresh_panel_embed(interaction.guild, panel_data["message_id"])
-
         preview_embed = discord.Embed(
             title=empty_config["title"],
             description=empty_config["description"],

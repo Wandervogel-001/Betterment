@@ -270,7 +270,7 @@ class FieldSelect(Select):
                 is_default = (i == selected_index)
                 options.append(discord.SelectOption(
                     label=f"Field {i+1}: {field.name[:80]}", value=str(i),
-                    description=(field.value[:100] or "No description."), default=is_default
+                    default=is_default
                 ))
         super().__init__(placeholder="Select a field to edit or remove...", min_values=1, max_values=1, options=options, row=1, disabled=not embed.fields)
 
